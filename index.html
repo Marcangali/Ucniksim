@@ -1,657 +1,1190 @@
 <!--
 APP_NAME: Fizikaóra: Ucník
-APP_DESCRIPTION: Éld túl a fizikaórát a rettegett Ucník tanárnővel! Vigyázz, mert énekel, "kiscsillagoz", harap és figyeli a puskázást.
+APP_DESCRIPTION: Éld túl a fizikaórát a rettegett Ucník tanárnővel! Szimulátor szuper rajzolt SVG tanárnővel, tárgyakkal, puskázással, krétadobálással, igazi tantermi hangulattal és magyar poénokkal.
 APP_ICON: 
 APP_CATEGORY: Games
-WINDOW_WIDTH: 380
-WINDOW_HEIGHT: 600
+WINDOW_WIDTH: 800
+WINDOW_HEIGHT: 700
 STORE_ID: fizika-ucnik-sim
 -->
 <!DOCTYPE html>
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fizikaóra: Ucník Tanárnő</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fizikaóra: Ucník Tanárnő Sim</title>
     <style>
         :root {
-            --bg-color: #f0f4f8;
+            --bg-color: #1a1e24;
+            --desk-color: #7c4a27;
+            --desk-dark: #563219;
             --surface-color: #ffffff;
             --primary-color: #0078d4;
-            --primary-hover: #0063b1;
+            --primary-hover: #005a9e;
             --danger-color: #d13438;
-            --board-color: #2b3a28;
-            --chalk-color: #e0e0e0;
-            --text-color: #202020;
-            --radius: 12px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --warning-color: #f2c94c;
+            --success-color: #107c10;
+            --board-color: #1e3322;
+            --board-frame: #422918;
+            --chalk-color: #f0f3f5;
+            --text-main: #202020;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.35);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-chalk: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             margin: 0;
             padding: 0;
             font-family: var(--font-main);
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background: radial-gradient(circle at center, #2c3540 0%, #15181d 100%);
+            color: var(--text-main);
             height: 100vh;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
-            user-select: none;
         }
 
-        /* App Container */
-        #app {
+        /* Layout Container */
+        #app-wrapper {
+            width: 100%;
+            max-width: 960px;
+            height: 100vh;
+            max-height: 820px;
+            background: #232931;
             display: flex;
             flex-direction: column;
-            height: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            gap: 10px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Header */
+        @media (min-width: 768px) {
+            #app-wrapper {
+                height: 94vh;
+                border-radius: 20px;
+                border: 2px solid rgba(255,255,255,0.1);
+            }
+        }
+
+        /* Top Navigation / Stats */
         header {
+            background: #181c22;
+            color: white;
+            padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 8px 8px 8px;
-            border-bottom: 1px solid #e0e0e0;
-            background: var(--bg-color);
+            border-bottom: 2px solid rgba(255,255,255,0.05);
             z-index: 10;
             flex-shrink: 0;
         }
 
-        h1 {
-            font-size: 16px;
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-title h1 {
+            font-size: 18px;
             margin: 0;
-            font-weight: 700;
-            color: #333;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .stats-bar {
             display: flex;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            gap: 12px;
+            align-items: center;
         }
 
-        .stat {
-            background: var(--surface-color);
-            padding: 4px 8px;
-            border-radius: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .stat-box {
+            background: #2a323d;
+            padding: 6px 12px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 4px;
-            border: 1px solid rgba(0,0,0,0.05);
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #e2e8f0;
         }
 
-        .grade-good { color: #107c10; }
-        .grade-avg { color: #d83b01; }
-        .grade-bad { color: var(--danger-color); }
+        .stat-label {
+            color: #94a3b8;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
 
-        /* Blackboard Area */
-        .classroom-view {
+        .grade-tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: white;
+        }
+        .grade-5 { background: #107c10; }
+        .grade-4 { background: #2e7d32; }
+        .grade-3 { background: #d83b01; }
+        .grade-2 { background: #e65100; }
+        .grade-1 { background: var(--danger-color); }
+
+        /* Meter Bars */
+        .meter-container {
+            width: 90px;
+            height: 10px;
+            background: #111;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* Main Game Grid Layout */
+        .game-grid {
             flex: 1;
+            display: grid;
+            grid-template-rows: minmax(220px, 1.2fr) minmax(70px, auto) 1fr;
+            gap: 10px;
+            padding: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .game-grid {
+                grid-template-columns: 1.4fr 1fr;
+                grid-template-rows: 1.3fr auto 1fr;
+            }
+            .classroom-view {
+                grid-column: 1 / 2;
+                grid-row: 1 / 2;
+            }
+            .dialogue-section {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+            }
+            .inventory-panel {
+                grid-column: 2 / 3;
+                grid-row: 1 / 3;
+            }
+            .controls-section {
+                grid-column: 1 / -1;
+                grid-row: 3 / 4;
+            }
+        }
+
+        /* Classroom Blackboard Screen */
+        .classroom-view {
             background: var(--board-color);
-            border: 6px solid #5d4037;
-            border-radius: 6px;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.2);
+            border: 10px solid var(--board-frame);
+            border-radius: 12px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8), var(--shadow-md);
             position: relative;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             padding: 16px;
             overflow: hidden;
-            min-height: 180px;
         }
 
-        .teacher-avatar {
-            width: 80px;
-            height: 80px;
-            background: #fff;
-            border-radius: 50%;
+        #chalk-canvas {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            border: 4px solid #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .board-header {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 40px;
+            justify-content: space-between;
+            color: rgba(255,255,255,0.4);
+            font-family: var(--font-chalk);
+            font-size: 13px;
+            z-index: 2;
+        }
+
+        .board-content {
+            font-family: var(--font-chalk);
+            color: var(--chalk-color);
+            font-size: 16px;
+            line-height: 1.5;
+            text-shadow: 0 0 2px rgba(255,255,255,0.6);
+            z-index: 2;
+            min-height: 80px;
+            white-space: pre-wrap;
+        }
+
+        .board-diagram {
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+            opacity: 0.65;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* SVG Teacher Stage */
+        .teacher-container {
+            position: absolute;
+            bottom: 0px;
+            right: 15px;
+            width: 160px;
+            height: 190px;
             z-index: 5;
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        .teacher-avatar.angry {
-            animation: shake 0.4s infinite;
-            background: #ffebeb;
-            border-color: #d13438;
+            transform-origin: bottom center;
         }
 
-        .teacher-avatar.singing {
-            animation: bounce 0.5s infinite alternate;
-            background: #e6f7ff;
-            border-color: #0078d4;
+        @media (min-width: 768px) {
+            .teacher-container {
+                width: 190px;
+                height: 220px;
+                right: 25px;
+            }
         }
 
-        .chalk-text {
-            font-family: 'Courier New', Courier, monospace;
-            color: var(--chalk-color);
-            font-size: 14px;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        /* SVG Character Visual Enhancements */
+        .teacher-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
         }
 
-        .chalk-notes {
+        /* Animations for Teacher */
+        .teacher-container.angry {
+            animation: shakeRage 0.35s infinite alternate ease-in-out;
+        }
+
+        .teacher-container.singing {
+            animation: swaySing 0.8s infinite alternate ease-in-out;
+        }
+
+        .teacher-container.suspicious {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .teacher-container.throwing {
+            animation: throwChalkAnim 0.4s ease-out;
+        }
+
+        @keyframes shakeRage {
+            0% { transform: translate(-3px, 0) rotate(-2deg); }
+            100% { transform: translate(3px, -4px) rotate(2deg); }
+        }
+
+        @keyframes swaySing {
+            0% { transform: translateY(0) rotate(-3deg); }
+            100% { transform: translateY(-10px) rotate(3deg); }
+        }
+
+        @keyframes throwChalkAnim {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(-15deg) translateY(-10px); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Flying Chalk Projectile Overlay */
+        #flying-chalk {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-family: 'Courier New', monospace;
-            color: rgba(255,255,255,0.4);
-            font-size: 12px;
-            text-align: right;
+            width: 28px;
+            height: 12px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.9), 0 0 20px #ff4d4d;
+            z-index: 90;
+            display: none;
+            pointer-events: none;
+            transform-origin: center;
+        }
+
+        /* QTE Dodge Button Overlay */
+        #dodge-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(209, 52, 56, 0.45);
+            backdrop-filter: blur(4px);
+            z-index: 85;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            animation: pulseAlert 0.4s infinite alternate;
+        }
+
+        @keyframes pulseAlert {
+            0% { background: rgba(209, 52, 56, 0.35); }
+            100% { background: rgba(209, 52, 56, 0.65); }
+        }
+
+        .btn-dodge {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            font-size: 22px;
+            font-weight: 900;
+            padding: 16px 36px;
+            border: 3px solid white;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(255, 75, 43, 0.6);
+            cursor: pointer;
+            transform: scale(1);
+            animation: popBtn 0.3s infinite alternate;
+        }
+
+        @keyframes popBtn {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
         }
 
         /* Dialogue Box */
-        .dialogue-box {
-            background: var(--surface-color);
-            border-radius: var(--radius);
-            padding: 12px;
-            min-height: 60px;
-            box-shadow: var(--shadow);
-            border-left: 5px solid var(--danger-color);
+        .dialogue-section {
+            background: #2a323d;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            border-left: 6px solid var(--danger-color);
             display: flex;
             flex-direction: column;
             justify-content: center;
-            transition: transform 0.1s;
-            flex-shrink: 0;
+            box-shadow: var(--shadow-md);
+            position: relative;
         }
 
-        .dialogue-box.active {
-            transform: scale(1.02);
+        .speaker-tag {
+            font-size: 11px;
+            font-weight: 800;
+            color: #f87171;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .dialogue-text {
-            font-style: italic;
-            color: #444;
+            color: #f1f5f9;
             font-size: 14px;
-            line-height: 1.3;
+            font-style: italic;
+            line-height: 1.4;
+            min-height: 38px;
         }
 
-        .speaker-name {
+        /* Desk / Inventory Items Panel */
+        .inventory-panel {
+            background: linear-gradient(180deg, var(--desk-color) 0%, var(--desk-dark) 100%);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            border: 2px solid #3d2412;
+            box-shadow: inset 0 3px 6px rgba(255,255,255,0.1), var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .panel-title {
+            color: #fce7f3;
+            font-size: 12px;
             font-weight: 800;
-            font-size: 11px;
-            color: var(--danger-color);
-            margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        /* Controls */
-        .controls-container {
-            position: relative;
-            min-height: 190px;
-            flex-shrink: 0;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            transition: opacity 0.3s, transform 0.3s;
-        }
-
-        .controls.fade-out {
-            opacity: 0;
-            transform: translateY(10px);
-            pointer-events: none;
-        }
-        
-        .controls.fade-in {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        button {
-            background: var(--surface-color);
-            border: 1px solid #d1d1d1;
-            border-radius: var(--radius);
-            padding: 8px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            color: #444;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 4px;
         }
 
-        button:hover {
-            background: #ffffff;
-            border-color: #999;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        button:active {
-            transform: translateY(0);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-            background: #f0f0f0;
-        }
-
-        /* Quiz Buttons - 2 Columns + 1 Full Row */
-        .quiz-grid {
+        .item-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr auto; /* Last row auto for cheat button */
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
+            flex: 1;
         }
 
-        .quiz-grid button {
-            text-align: center;
-            justify-content: center;
+        @media (min-width: 768px) {
+            .item-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .item-card {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-md);
             padding: 8px;
-            font-size: 13px;
-            height: 100%;
-            border-left: 2px solid transparent;
-        }
-
-        .quiz-grid button:hover {
-            border-left-color: var(--primary-color);
-            background: #f8fbff;
-        }
-
-        /* Cheat Button */
-        .btn-cheat {
-            grid-column: 1 / -1; /* Span full width */
-            background: #fff8e1;
-            border: 1px solid #f1c40f;
-            color: #d35400;
-            font-weight: 700;
-            min-height: 40px;
-        }
-        
-        .btn-cheat:hover {
-            background: #fef9e7;
-            border-color: #d35400;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.2);
-        }
-
-        /* Specific Button Styles */
-        .btn-volunteer {
-            background: linear-gradient(135deg, #fff 0%, #f0f4ff 100%);
-            border-color: #cce0ff;
-            color: var(--primary-color);
-        }
-        .btn-volunteer:hover {
-            border-color: var(--primary-color);
-        }
-
-        /* Force Main Controls to be 2 Columns */
-        #controls-normal {
-            grid-template-rows: 1fr 1fr;
-            height: auto;
-            max-height: 120px;
-        }
-        #controls-normal button {
-            height: 50px;
-        }
-
-        /* Animations */
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-2deg); }
-            20% { transform: translate(-3px, 0px) rotate(2deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(2deg); }
-            50% { transform: translate(-1px, 2px) rotate(-2deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-2deg); }
-            80% { transform: translate(-1px, -1px) rotate(2deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-2deg); }
-        }
-
-        @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-8px); }
-        }
-
-        .hidden { display: none !important; }
-        
-        .overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            color: white;
             text-align: center;
-            padding: 24px;
-            backdrop-filter: blur(8px);
         }
 
-        .overlay h2 { 
-            margin-bottom: 12px; 
-            font-size: 26px; 
-            color: #202020;
+        .item-card:hover:not(.disabled) {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-3px);
+            border-color: #f59e0b;
         }
-        
-        .overlay p { 
-            margin-bottom: 24px; 
-            color: #606060; 
-            max-width: 320px; 
-            line-height: 1.6; 
+
+        .item-card:active:not(.disabled) {
+            transform: translateY(0);
         }
-        
-        .overlay button {
-            width: auto;
-            min-width: 180px;
-            background: var(--primary-color);
+
+        .item-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .item-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+
+        .item-name {
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .item-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #232931;
+        }
+
+        /* Controls Section */
+        .controls-section {
+            background: #1e242c;
+            border-radius: var(--radius-md);
+            padding: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .controls-deck {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            height: 100%;
+        }
+
+        @media (min-width: 600px) {
+            .controls-deck {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .btn-action {
+            background: #2d3748;
+            color: #f1f5f9;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-md);
+            padding: 12px 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-action:hover {
+            background: #3a475c;
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
+            background: #252d3b;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-color: #3b82f6;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        /* Quiz Deck */
+        .quiz-deck {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .quiz-deck button {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: var(--radius-md);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-deck button:hover {
+            background: #334155;
+            border-color: #60a5fa;
+            color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        .btn-cheat-quiz {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #78350f, #92400e) !important;
+            color: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            font-weight: 800 !important;
+        }
+        .btn-cheat-quiz:hover {
+            background: linear-gradient(135deg, #92400e, #b45309) !important;
+        }
+
+        /* Achievements Drawer / Modal */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            color: white;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .overlay h2 {
+            font-size: 28px;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
+
+        .overlay p {
+            color: #cbd5e1;
+            max-width: 420px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .overlay-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
             color: white;
             border: none;
-            padding: 14px 24px;
+            padding: 14px 32px;
+            border-radius: 30px;
             font-size: 16px;
-        }
-        
-        .overlay button:hover {
-            background: var(--primary-hover);
-        }
-
-        .final-score-box {
-            font-size: 48px;
             font-weight: 800;
-            margin: 20px 0;
-            padding: 10px 30px;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s;
         }
 
+        .overlay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+        }
+
+        /* Final Result Card */
+        .final-card {
+            background: #1e293b;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .final-grade-badge {
+            font-size: 54px;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        /* Achievements Box */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .badge-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: var(--radius-md);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .badge-card.unlocked {
+            border-color: #f59e0b;
+            background: #1e1b4b;
+            color: #fef08a;
+        }
+
+        .badge-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+
+        /* Floating Sunglasses Effect on Screen when active */
+        .sunglasses-active-banner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #000;
+            color: #00ffcc;
+            font-weight: 900;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid #00ffcc;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 20;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
 
-    <div id="app">
+    <div id="app-wrapper">
+        <!-- Header / Stats Bar -->
         <header>
-            <h1>Fizikaóra Szimulátor</h1>
+            <div class="brand-title">
+                <span style="font-size: 22px;">👩‍🏫</span>
+                <h1>Fizikaóra: Ucník Sim</h1>
+            </div>
             <div class="stats-bar">
-                <div class="stat">
-                    <span>Átlag:</span>
-                    <strong id="grade-display" class="grade-good">5.0</strong>
+                <div class="stat-box">
+                    <span class="stat-label">Átlag:</span>
+                    <span id="grade-display" class="grade-tag grade-5">5.0</span>
                 </div>
-                <div class="stat">
-                    <span>Idő:</span>
-                    <strong id="timer-display">45:00</strong>
+                <div class="stat-box">
+                    <span class="stat-label">Gyanú:</span>
+                    <div class="meter-container">
+                        <div id="suspicion-meter" class="meter-fill" style="width: 0%; background-color: #107c10;"></div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Idő:</span>
+                    <span id="timer-display" style="color: #60a5fa;">45:00</span>
                 </div>
             </div>
         </header>
 
-        <div class="classroom-view">
-            <div class="chalk-notes">7.b osztály</div>
-            <div id="blackboard-text" class="chalk-text">Üljön le, fiam. Kezdünk.</div>
-            <div style="margin-top:auto; opacity:0.7">
-                 <svg width="100" height="60" viewBox="0 0 100 60">
-                    <path d="M10,50 L90,50 L90,10 L10,50" stroke="#e0e0e0" stroke-width="2" fill="none"/>
-                    <text x="40" y="45" fill="#e0e0e0" font-family="monospace" font-size="10">α</text>
-                    <text x="50" y="60" fill="#e0e0e0" font-family="monospace" font-size="10">F = m*a</text>
-                </svg>
+        <!-- Main Classroom View Grid -->
+        <div class="game-grid">
+            <!-- Blackboard & Teacher Stage -->
+            <div class="classroom-view">
+                <canvas id="chalk-canvas"></canvas>
+
+                <div class="board-header">
+                    <span>7.B Osztály</span>
+                    <span>Téma: Fizikai Törvények</span>
+                </div>
+
+                <div id="blackboard-text" class="board-content">"Üljön le fiam, füzeteket kinyitni!"</div>
+
+                <!-- Blackboard Vector Graphic -->
+                <div class="board-diagram">
+                    <svg width="110" height="65" viewBox="0 0 110 65" fill="none">
+                        <path d="M10,55 L95,55 L95,15 L10,55" stroke="rgba(240,243,245,0.5)" stroke-width="2" stroke-dasharray="3,3"/>
+                        <line x1="10" y1="55" x2="60" y2="20" stroke="rgba(240,243,245,0.7)" stroke-width="2"/>
+                        <circle cx="60" cy="20" r="6" fill="rgba(240,243,245,0.8)"/>
+                        <text x="65" y="18" fill="rgba(240,243,245,0.7)" font-family="monospace" font-size="10">m*g</text>
+                        <text x="35" y="50" fill="rgba(240,243,245,0.7)" font-family="monospace" font-size="10">α</text>
+                    </svg>
+                </div>
+
+                <!-- Interactive SVG Teacher (Ucník) -->
+                <div id="teacher-stage" class="teacher-container">
+                    <svg class="teacher-svg" viewBox="0 0 200 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Teacher Hair Back -->
+                        <path d="M60,60 C40,90 40,140 50,170 C60,170 140,170 150,170 C160,140 160,90 140,60 Z" fill="#4a2e1b"/>
+                        <!-- Hair Bun -->
+                        <circle cx="100" cy="35" r="28" fill="#362011"/>
+                        <ellipse cx="100" cy="35" rx="22" ry="8" fill="#5c3a21"/>
+
+                        <!-- Body / Suit -->
+                        <path d="M50,250 L60,150 C70,140 130,140 140,150 L150,250 Z" fill="#9f1239"/>
+                        <!-- Blouse Collar -->
+                        <path d="M85,150 L100,180 L115,150 Z" fill="#ffffff"/>
+                        <path d="M100,180 L100,250" stroke="#881337" stroke-width="3"/>
+                        <circle cx="100" cy="200" r="3" fill="#fbbf24"/>
+                        <circle cx="100" cy="225" r="3" fill="#fbbf24"/>
+
+                        <!-- Neck -->
+                        <rect x="88" y="125" width="24" height="25" fill="#fbcfe8" rx="4"/>
+
+                        <!-- Head -->
+                        <ellipse cx="100" cy="95" rx="40" ry="45" fill="#fbcfe8"/>
+
+                        <!-- Hair Front Fringe -->
+                        <path d="M60,80 C80,60 120,60 140,80 C130,68 110,65 100,66 C90,65 70,68 60,80 Z" fill="#5c3a21"/>
+
+                        <!-- Dynamic Face Elements Container -->
+                        <g id="teacher-face">
+                            <!-- Eyebrows (Normal) -->
+                            <path id="brow-left" d="M72,82 Q82,80 90,83" stroke="#362011" stroke-width="3" stroke-linecap="round"/>
+                            <path id="brow-right" d="M110,83 Q118,80 128,82" stroke="#362011" stroke-width="3" stroke-linecap="round"/>
+
+                            <!-- Eyes (Normal) -->
+                            <g id="eyes-group">
+                                <circle cx="82" cy="94" r="6" fill="#ffffff"/>
+                                <circle id="pupil-left" cx="82" cy="94" r="3" fill="#1e293b"/>
+                                <circle cx="118" cy="94" r="6" fill="#ffffff"/>
+                                <circle id="pupil-right" cx="118" cy="94" r="3" fill="#1e293b"/>
+                            </g>
+
+                            <!-- Glasses -->
+                            <rect x="70" y="86" width="24" height="16" rx="3" stroke="#000000" stroke-width="2.5" fill="rgba(255,255,255,0.2)"/>
+                            <rect x="106" y="86" width="24" height="16" rx="3" stroke="#000000" stroke-width="2.5" fill="rgba(255,255,255,0.2)"/>
+                            <line x1="94" y1="92" x2="106" y2="92" stroke="#000000" stroke-width="2.5"/>
+
+                            <!-- Nose -->
+                            <path d="M100,95 Q103,105 98,110" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                            <!-- Mouth (Normal) -->
+                            <path id="teacher-mouth" d="M88,122 Q100,126 112,122" stroke="#be123c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                        </g>
+
+                        <!-- Raised Arm / Ruler or Chalk Hand -->
+                        <g id="teacher-arm" transform="rotate(0 140 160)">
+                            <path d="M140,160 L175,190" stroke="#9f1239" stroke-width="14" stroke-linecap="round"/>
+                            <circle cx="178" cy="193" r="7" fill="#fbcfe8"/>
+                            <!-- Pointer Stick / Ruler -->
+                            <rect id="teacher-item" x="176" y="140" width="5" height="60" fill="#f59e0b" rx="2" transform="rotate(25 176 140)"/>
+                        </g>
+
+                        <!-- Singing Music Notes Effect -->
+                        <g id="singing-notes" opacity="0">
+                            <text x="40" y="50" fill="#60a5fa" font-size="20">🎵</text>
+                            <text x="145" y="40" fill="#a78bfa" font-size="24">🎶</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Sunglasses Banner -->
+                <div id="sunglasses-banner" class="sunglasses-active-banner hidden">
+                    <span>🕶️ NAPSZEMÜVEG AKTÍV</span>
+                </div>
             </div>
-            <div id="teacher" class="teacher-avatar">👩‍🏫</div>
-        </div>
 
-        <div class="dialogue-box" id="dialogue-box">
-            <div class="speaker-name" id="speaker-name">Ucník Tanárnő</div>
-            <div id="dialogue-text" class="dialogue-text">"Na, ki nem hozott felszerelést?"</div>
-        </div>
-
-        <div class="controls-container">
-            <!-- Normal Controls -->
-            <div id="controls-normal" class="controls fade-in">
-                <button onclick="game.action('nod')">🙂 Bólogatás</button>
-                <button onclick="game.action('write')">📝 Jegyzetelés</button>
-                <button onclick="game.action('sleep')">😴 Bambulás</button>
-                <button onclick="game.action('volunteer')" class="btn-volunteer">🙋‍♂️ Jelentkezés</button>
+            <!-- Dialogue Section -->
+            <div class="dialogue-section">
+                <div class="speaker-tag">
+                    <span>👩‍🏫</span>
+                    <span id="speaker-name">Ucník Tanárnő</span>
+                </div>
+                <div id="dialogue-text" class="dialogue-text">"Na, ki nem hozott felszerelést?"</div>
             </div>
 
-            <!-- Quiz Controls: 2x2 Grid + Cheat button -->
-            <div id="controls-quiz" class="controls quiz-grid fade-out">
-                <!-- Dynamically filled -->
+            <!-- Desk / Inventory Panel -->
+            <div class="inventory-panel">
+                <div class="panel-title">
+                    <span>🎒 Pad Rekesze (Tárgyak)</span>
+                </div>
+                <div class="item-grid">
+                    <div class="item-card" onclick="game.useItem('sunglasses')" title="Napszemüveg: Csökkenti a gyanút a következő akcióknál">
+                        <span class="item-icon">🕶️</span>
+                        <span class="item-name">Szemüveg</span>
+                        <span id="count-sunglasses" class="item-count">1</span>
+                    </div>
+                    <div class="item-card" onclick="game.useItem('coffee')" title="Kávé: +5 mp a válaszadási időre">
+                        <span class="item-icon">☕</span>
+                        <span class="item-name">Kávé</span>
+                        <span id="count-coffee" class="item-count">2</span>
+                    </div>
+                    <div class="item-card" onclick="game.useItem('airplane')" title="Papírrepülő: Eltereli a tanárnő figyelmét (-30% gyanú)">
+                        <span class="item-icon">✈️</span>
+                        <span class="item-name">Repülő</span>
+                        <span id="count-airplane" class="item-count">1</span>
+                    </div>
+                    <div class="item-card" onclick="game.useItem('cheat_sheet')" title="Súgókártya: Garantiáltan helyes válasz a feleletnél">
+                        <span class="item-icon">📜</span>
+                        <span class="item-name">Súgólap</span>
+                        <span id="count-cheat_sheet" class="item-count">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls Deck -->
+            <div class="controls-section">
+                <!-- Standard Actions Deck -->
+                <div id="controls-normal" class="controls-deck">
+                    <button class="btn-action" onclick="game.action('nod')">
+                        <span>🙂</span> Bólogatás
+                    </button>
+                    <button class="btn-action" onclick="game.action('write')">
+                        <span>📝</span> Jegyzetelés
+                    </button>
+                    <button class="btn-action" onclick="game.action('sleep')">
+                        <span>😴</span> Bambulás
+                    </button>
+                    <button class="btn-action btn-primary" onclick="game.action('volunteer')">
+                        <span>🙋‍♂️</span> Jelentkezés
+                    </button>
+                </div>
+
+                <!-- Quiz Deck (Dynamic) -->
+                <div id="controls-quiz" class="quiz-deck hidden">
+                    <!-- Populated dynamically -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Start Screen -->
+    <!-- Flying Chalk Container -->
+    <div id="flying-chalk"></div>
+
+    <!-- Quick Time Event Overlay -->
+    <div id="dodge-overlay" class="hidden">
+        <h2 style="color: white; text-shadow: 0 0 10px red; margin:0;">⚠️ REPÜL A KRÉTA! ⚠️</h2>
+        <button class="btn-dodge" onclick="game.dodgeChalk()">🏃‍♂️ ELHAJLÁS!</button>
+    </div>
+
+    <!-- Start Overlay Screen -->
     <div id="start-screen" class="overlay">
-        <div style="font-size: 64px; margin-bottom: 10px;">👩‍🏫</div>
-        <h2>Fizikaóra: Ucník</h2>
-        <p>A tanárnő ma harcias kedvében van. Vigyázz, ha "kiscsillagoz", az rosszat jelent! <br><br>Válaszolj a kérdésekre gyorsan (7 mp)!<br>Ha bajban vagy, talán a <b>puskázás</b> segít... de vigyázz!</p>
-        <button onclick="game.start()">Óra Kezdése</button>
+        <div style="font-size: 72px; margin-bottom: 12px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">👩‍🏫</div>
+        <h2>Fizikaóra: Ucník Sim</h2>
+        <p>Éld túl a rettegett fizikaórát! Vigyázz Ucník Tanárnővel: énekel, krétát dobál, és árgus szemekkel figyeli a puskázást.<br><br>Használd a <b>padban lévő tárgyakat</b>, válaszolj a kérdésekre, és tartsd alacsonyan a gyanúszintedet!</p>
+        <button class="overlay-btn" onclick="game.start()">Óra Kezdése 🔔</button>
     </div>
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="overlay hidden">
         <h2 id="end-title">Megbuktál!</h2>
         <p id="end-reason">Az átlagod kritikus szint alá esett.</p>
-        <div id="final-score" class="final-score-box">1.0</div>
-        <button onclick="game.reset()">Pótvizsga</button>
+
+        <div class="final-card">
+            <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: 800;">Végső Átlagod</div>
+            <div id="final-score" class="final-grade-badge grade-1">1.0</div>
+            <div id="final-stats" style="font-size: 13px; color: #cbd5e1;">Puskázások: 0 | Elhajlások: 0</div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 800; color: #cbd5e1; margin-bottom: 6px;">ELÉRT JELVÉNYEK:</div>
+        <div id="achievements-list" class="achievements-grid">
+            <!-- Badges -->
+        </div>
+
+        <button class="overlay-btn" style="margin-top: 20px;" onclick="game.reset()">Pótvizsga Próbálkozás 🔄</button>
     </div>
 
     <script>
-        if (window.innerWidth < 420 || document.body.classList.contains('mobile-mode')) {
-            document.body.classList.add('mobile-mode');
-        }
+        // --- Web Audio Synthesizer Engine ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
 
-        // --- Audio System (Web Audio API) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        const sounds = {
-            chalk: () => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-                const bufferSize = audioCtx.sampleRate * 0.15; 
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playChalk() {
+                this.init();
+                const bufferSize = this.ctx.sampleRate * 0.12;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                const noise = audioCtx.createBufferSource();
+
+                const noise = this.ctx.createBufferSource();
                 noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
                 filter.type = 'bandpass';
-                filter.frequency.value = 900;
+                filter.frequency.value = 1200;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
                 noise.connect(filter);
                 filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                gain.connect(this.ctx.destination);
                 noise.start();
-            },
-            ding: () => { 
-                const t = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+            }
+
+            playDing() {
+                this.init();
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, t); 
-                osc.frequency.setValueAtTime(659.25, t + 0.1); 
-                gain.gain.setValueAtTime(0.1, t);
-                gain.gain.linearRampToValueAtTime(0.001, t + 0.4);
+                osc.frequency.setValueAtTime(523.25, t);
+                osc.frequency.setValueAtTime(659.25, t + 0.1);
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
                 osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                gain.connect(this.ctx.destination);
                 osc.start();
                 osc.stop(t + 0.4);
-            },
-            fail: () => { 
-                const t = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+            }
+
+            playFail() {
+                this.init();
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, t);
-                osc.frequency.linearRampToValueAtTime(80, t + 0.3);
+                osc.frequency.setValueAtTime(160, t);
+                osc.frequency.linearRampToValueAtTime(70, t + 0.35);
                 gain.gain.setValueAtTime(0.15, t);
-                gain.gain.linearRampToValueAtTime(0.001, t + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
                 osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(t + 0.35);
+            }
+
+            playDeskSlam() {
+                this.init();
+                const t = this.ctx.currentTime;
+                // Sub-bass boom
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, t);
+                osc.frequency.exponentialRampToValueAtTime(30, t + 0.3);
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
                 osc.start();
                 osc.stop(t + 0.3);
-            },
-            mumble: () => { 
-                const t = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(200, t);
-                osc.frequency.linearRampToValueAtTime(150, t + 0.1);
-                gain.gain.setValueAtTime(0.05, t);
-                gain.gain.linearRampToValueAtTime(0, t + 0.1);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(t + 0.1);
-            },
-            bell: () => { 
-                const t = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(800, t);
-                const lfo = audioCtx.createOscillator();
-                lfo.frequency.value = 20;
-                const lfoGain = audioCtx.createGain();
-                lfoGain.gain.value = 600;
+            }
+
+            playWhoosh() {
+                this.init();
+                const t = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.25;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(200, t);
+                filter.frequency.exponentialRampToValueAtTime(1500, t + 0.12);
+                filter.frequency.exponentialRampToValueAtTime(200, t + 0.25);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.15, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            }
+
+            playBell() {
+                this.init();
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, t);
+
+                const lfo = this.ctx.createOscillator();
+                lfo.frequency.value = 15;
+                const lfoGain = this.ctx.createGain();
+                lfoGain.gain.value = 30;
                 lfo.connect(lfoGain);
                 lfoGain.connect(osc.frequency);
                 lfo.start();
+
                 gain.gain.setValueAtTime(0.2, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+
                 osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                gain.connect(this.ctx.destination);
                 osc.start();
-                osc.stop(t + 1.5);
-            },
-            sing: () => {
-                const now = audioCtx.currentTime;
+                osc.stop(t + 1.2);
+            }
+
+            playSing() {
+                this.init();
+                const now = this.ctx.currentTime;
                 const notes = [392, 523, 659, 523, 392, 330];
                 notes.forEach((freq, i) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.value = freq;
                     gain.gain.setValueAtTime(0.08, now + i * 0.15);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.13);
                     osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    gain.connect(this.ctx.destination);
                     osc.start(now + i * 0.15);
                     osc.stop(now + i * 0.15 + 0.15);
                 });
             }
-        };
 
-        const playSound = (name) => {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (sounds[name]) sounds[name]();
-        };
+            playItemUse() {
+                this.init();
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t + 0.2);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(t + 0.2);
+            }
 
-        // --- Data ---
-        
+            playBadgeUnlock() {
+                this.init();
+                const t = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.12, t + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t + i * 0.08);
+                    osc.stop(t + i * 0.08 + 0.2);
+                });
+            }
+        }
+
+        const soundEngine = new SoundEngine();
+
+        // --- Data & Quotes ---
         const insults = [
-            "Ezért kár volt koptatni a padot.",
-            "Kiscsillag, ez fizikai fájdalmat okozott nekem.",
+            "Ezért kár volt koptatni a padot, kiscsillag.",
+            "Kiscsillag, ez olyan fizikai fájdalmat okozott nekem!",
             "Látom, a gravitáció az egyetlen erő, ami hat magára.",
-            "Édes fiam, ezt még a büfés néni is tudja.",
-            "Ha Newton ezt hallaná, forogna a sírjában.",
-            "Kérem, ne lélegezzen ilyen hangosan, zavarja a fizikát.",
-            "Maga szerint az Ohm-törvény egy javaslat?",
-            "Üljön le. Egyes. Nagyon egyes.",
-            "Ihajla tyuhajla, maga az egyesek királya!",
-            "Ezt a választ még a portás is kinevetné.",
-            "Kiscsillagom, maga fizikai anomália.",
-            "Jaj, drágám... ez siralmas volt.",
-            "Maga szerencsétlen, hát sose nyitja ki a könyvet?",
-            "Ez az amőbák szellemi szintje.",
+            "Édes fiam, ezt még a büfés néni is fejből tudja.",
+            "Ha Newton ezt hallaná, forogna a sírjában!",
+            "Kérem ne lélegezzen ilyen hangosan, zavarja a fizikát.",
+            "Maga szerint az Ohm-törvény egy baráti javaslat?!",
+            "Üljön le! Egyes! Nagyon sötét egyes!",
+            "Ihajla tyuhajla, maga az egyesek császára!",
+            "Ezt a választ még a portás bácsi is kinevetné.",
+            "Kiscsillagom, maga egy fizikai anomália.",
+            "Maga szerencsétlen, hát sose nyitja ki a füzetet?!",
             "Még az entrópia is csökken, ha maga megszólal.",
-            "Hihetetlen. Egyszerűen hihetetlen a sötétség.",
-            "Maga egy fekete lyuk a tudás univerzumában.",
-            "Szégyenfolt az osztálykönyvben.",
-            "Ezt a teljesítményt még egy döglött akkumulátor is túlszárnyalná.",
-            "Ne nézzen rám ilyen üres tekintettel, mert elnyel, mint a fekete lyuk!",
-            "Látom, a súrlódás az agytekervényeinél elhanyagolható.",
-            "Ha a butaság fájna, maga már ordítana.",
-            "Maga a bizonyíték, hogy a vákuumban nem terjed a hang, de az ön fejében a gondolat se.",
-            "Kiscsillag, a maga hatásfoka rosszabb, mint egy gőzgépé.",
-            "Ezt még a takarító néni macskája is jobban tudja.",
-            "Maga nem tanuló, maga egy entrópia-növelő tényező.",
+            "Maga egy fekete lyuk a tudás univerzumában!",
             "Olyan sötét van a fejében, hogy fotont lehetne benne tárolni.",
-            "Ez a teljesítmény nulla Kelvin fokos. Abszolút nulla."
-        ];
-
-        const shoutPhrases = [
-            "MIRE VÁR? A SÜLT GALAMBRA?!",
-            "GYERÜNK MÁR! AZ IDŐ PÉNZ, DE MAGÁNAK NINCS TUDÁSA!",
-            "HÉT MÁSODPERC ALATT A FÉNY HÉTSZER KERÜLI MEG A FÖLDET!",
-            "NE BÁMULJON, VÁLASZOLJON! MOST!",
-            "LEFAGYOTT, MINT A WINDOWS 95?!",
-            "KIS CSILLAG, MEGŐSZÜLÖK MAGA MIATT!",
-            "ALUSZIK VAGY CSAK LASSÚ A PROCESSZOR?!",
-            "ÉBRESZTŐ! EZ FIZIKA, NEM MEDITÁCIÓ!",
-            "NE HÚZZA AZ IDŐMET, MERT MEGÖREGSZEM!",
-            "A FÖLD FOROG, DE MAGA ÁLL! VÁLASZT KÉREK!",
-            "KETYEG AZ ÓRA, KISCSILLAG!",
-            "HALLÓ! FÖLD HÍVJA A DIÁKOT!",
-            "NE A PLAFONT NÉZZE, OTT NINCS PUSKA!",
-            "AZ AGYSEJTEK SZTRÁJKOLNAK?!"
+            "Ez a teljesítmény nulla Kelvin fokos. Abszolút nulla!"
         ];
 
         const praises = [
             "Hm. Nem rossz. Leülhet.",
-            "Végre valaki tanult is.",
-            "Na, ezt szeretem hallani.",
+            "Végre valaki tanult is ezen az órán!",
+            "Na, ezt szeretem hallani!",
             "Helyes. Látom, kezd világosodni az elméje.",
             "Jó válasz. Ritka pillanat ebben az osztályban.",
-            "Na, csak van ott valami azokban a szürkeállományokban.",
-            "Ez már döfi! Így tovább.",
-            "Látom, nem csak melegedni jár be.",
+            "Ez már döfi! Így tovább, fiam.",
             "Meglepett. Kellemesen.",
-            "Ez igen. Talán mégsem reménytelen.",
-            "Na végre egy értelmes szó.",
-            "Jól van, fiam. Ne bízza el magát."
+            "Na végre egy értelmes szó!"
         ];
 
         const idleComments = [
             "Na kérem, ki tudja mi a súrlódás?",
-            "Írjuk fel a táblára...",
+            "Írjuk fel a táblára: F = m * a...",
             "Aki nem figyel, az repül!",
-            "Kovács, ne hintázzon a székkel, mert leesik és m*g=F!",
+            "Kovács, ne hintázzon a székkel, mert leesik!",
             "A dolgozatok... katasztrofálisak lettek. Siralmas.",
             "Kinyitom az ablakot, hadd menjen ki a butaság.",
-            "Miért van ekkora csend? A csend a tudás hiánya.",
-            "Vegye elő a függvénytáblát, fiam, ne a telefonját!",
-            "A fizika nem játék, kérem szépen.",
+            "Miért van ekkora csend? A csend a tudás hiánya!",
+            "Vegye elő a függvénytáblát, ne a telefonját!",
             "Ne rágózzon, fiam, mert lenyeli és megnő a tömege!",
             "A tábla tiszta, a fejek üresek.",
-            "Látom a szemén az üveges tekintetet.",
-            "Ne pislogjon olyan hangosan, hallom a gondolatok hiányát.",
-            "Kovács, tegye el a szalámit, ez nem ebédlő!",
-            "Aki a telefonját nyomkodja, annak a kezére ütök a vonalzóval!",
-            "Látom, ma mindenki a bolygók együttállását tanulmányozza a plafonon.",
-            "A tábla nem televízió, nem kell bámulni, írni kell róla!",
-            "Zörög a papírral... zörög a csontjaimban a harag.",
-            "Milyen szép idő van kint... kár, hogy maguk itt szenvednek.",
-            "Ihajla, de megfájdult a fejem ettől a sok okos tekintettől.",
-            "Na, ébredjünk fel Csipkerózsika álmunkból.",
-            "Ez nem a Rózsa Sándor, itt nem betyárkodunk."
+            "Zörög a papírral... zörög a csontjaimban a harag!"
         ];
 
         const singingLyrics = [
@@ -659,74 +1192,122 @@ STORE_ID: fizika-ucnik-sim
             "Ihajla tyuhajla, ki nem tanul, az elhasal ma!",
             "Hullámzik a Balaton, hullámzik az elektron...",
             "Látom a szemében a vektorok hiányát, ihajla...",
-            "Erdő szélén, de nem a súrlódási határon...",
-            "Debrecenbe kéne menni, fizikát kéne venni...",
-            "Ég a gyertya ég, a tudás nálad még... nincs meg!",
-            "Húzzad csak kivilágos virradatig, amíg a kondenzátor kisül!"
+            "Ég a gyertya ég, a tudás nálad még... nincs meg!"
         ];
 
         const questions = [
             { q: "Mi a sebesség jele?", a: ["v", "s", "t", "F"], correct: 0 },
-            { q: "Newton II. törvénye?", a: ["F = m*a", "E = mc^2", "U = R*I", "p = m*v"], correct: 0 },
-            { q: "Az út jele?", a: ["s", "m", "h", "x"], correct: 0 },
+            { q: "Newton II. törvénye?", a: ["F = m*a", "E = mc²", "U = R*I", "p = m*v"], correct: 0 },
+            { q: "Az út jele a fizikában?", a: ["s", "m", "h", "x"], correct: 0 },
             { q: "Az erő mértékegysége?", a: ["Newton", "Watt", "Joule", "Pascal"], correct: 0 },
-            { q: "Teljesítmény egysége?", a: ["Watt", "Volt", "Amper", "Ohm"], correct: 0 },
+            { q: "Teljesítmény mértékegysége?", a: ["Watt", "Volt", "Amper", "Ohm"], correct: 0 },
             { q: "Ohm törvénye?", a: ["R = U/I", "F = m*g", "v = s/t", "E = h*f"], correct: 0 },
-            { q: "Gravitációs gyorsulás?", a: ["9.81 m/s²", "100 km/h", "3.14", "0 m/s"], correct: 0 },
-            { q: "Mi az idő jele?", a: ["t", "T", "s", "i"], correct: 0 },
+            { q: "Gravitációs gyorsulás (g)?", a: ["9.81 m/s²", "100 km/h", "3.14", "0 m/s"], correct: 0 },
             { q: "Sűrűség képlete?", a: ["ρ = m/V", "ρ = V/m", "ρ = m*V", "ρ = F/A"], correct: 0 },
-            { q: "Frekvencia egysége?", a: ["Hertz", "Pascal", "Tesla", "Weber"], correct: 0 },
+            { q: "Frekvencia mértékegysége?", a: ["Hertz", "Pascal", "Tesla", "Weber"], correct: 0 },
             { q: "Abszolút nulla fok?", a: ["-273.15 °C", "0 °C", "-100 °C", "273 K"], correct: 0 },
-            { q: "Mi a nyomás jele?", a: ["p", "P", "n", "N"], correct: 0 },
-            { q: "Fénysebesség?", a: ["300 000 km/s", "340 m/s", "9.81 m/s", "∞"], correct: 0 },
-            { q: "Mozgási energia?", a: ["1/2 * m * v²", "m * g * h", "F * s", "I * U"], correct: 0 },
-            { q: "Munkavégzés jele?", a: ["W", "P", "E", "Q"], correct: 0 },
-            { q: "Mi a töltés jele?", a: ["Q", "C", "I", "U"], correct: 0 },
-            { q: "Mivel mérjük az áramot?", a: ["Ampermérő", "Voltmérő", "Hőmérő", "Stopper"], correct: 0 },
-            { q: "A teljesítmény jele?", a: ["P", "W", "E", "T"], correct: 0 },
-            { q: "Mi az 'g' értéke?", a: ["9.81", "10", "3.14", "100"], correct: 0 },
-            { q: "Hőmérséklet jele?", a: ["T", "t", "Q", "C"], correct: 0 },
-            { q: "Feszültség mértékegysége?", a: ["Volt", "Watt", "Amper", "Joule"], correct: 0 },
-            { q: "Helyzeti energia?", a: ["m*g*h", "1/2*m*v^2", "F*s", "U*I"], correct: 0 },
-            { q: "Mi az 'm' a képletben?", a: ["Tömeg", "Méter", "Munka", "Motor"], correct: 0 },
-            { q: "Nyomás mértékegysége?", a: ["Pascal", "Newton", "Watt", "Joule"], correct: 0 },
-            { q: "Mi az atommagban van?", a: ["Proton", "Elektron", "Foton", "Ion"], correct: 0 }
+            { q: "Fénysebesség vákuumban?", a: ["300 000 km/s", "340 m/s", "9.81 m/s", "∞"], correct: 0 },
+            { q: "Mozgási energia képlete?", a: ["1/2 * m * v²", "m * g * h", "F * s", "I * U"], correct: 0 },
+            { q: "Elektromos feszültség egysége?", a: ["Volt", "Watt", "Amper", "Joule"], correct: 0 },
+            { q: "Nyomás mértékegysége?", a: ["Pascal", "Newton", "Watt", "Joule"], correct: 0 }
         ];
 
-        // --- Game Logic ---
-
-        class Game {
+        // --- Game Engine Class ---
+        class PhysicsGame {
             constructor() {
                 this.grade = 5.0;
-                this.timeRemaining = 45; 
+                this.suspicion = 0; // 0 to 100
+                this.timeRemaining = 45;
                 this.timerInterval = null;
                 this.loopTimeout = null;
                 this.quizTimeout = null;
-                this.state = 'IDLE'; 
+                this.state = 'IDLE'; // IDLE, QUIZ, SINGING, QTE
+
+                // Items inventory
+                this.items = {
+                    sunglasses: 1,
+                    coffee: 2,
+                    airplane: 1,
+                    cheat_sheet: 1
+                };
+
+                this.sunglassesActiveTimer = 0;
+                this.stats = {
+                    cheatsUsed: 0,
+                    dodges: 0,
+                    coffeesDrank: 0
+                };
+
+                // Canvas Chalk Dust
+                this.canvas = document.getElementById('chalk-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+            }
+
+            initCanvas() {
+                this.canvas.width = this.canvas.parentElement.clientWidth;
+                this.canvas.height = this.canvas.parentElement.clientHeight;
+                if (!this.particleLoopStarted) {
+                    this.particleLoopStarted = true;
+                    this.updateParticles();
+                }
+            }
+
+            addChalkDust(x, y, count = 15) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: x || Math.random() * this.canvas.width,
+                        y: y || Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        alpha: 1,
+                        size: Math.random() * 3 + 1
+                    });
+                }
+            }
+
+            updateParticles() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.alpha -= 0.02;
+                    this.ctx.fillStyle = `rgba(240, 243, 245, ${p.alpha})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    if (p.alpha <= 0) this.particles.splice(i, 1);
+                }
+                requestAnimationFrame(() => this.updateParticles());
             }
 
             start() {
+                soundEngine.init();
+                soundEngine.playBell();
+
                 document.getElementById('start-screen').classList.add('hidden');
                 document.getElementById('game-over-screen').classList.add('hidden');
-                playSound('bell');
-                
+
                 this.grade = 5.0;
+                this.suspicion = 0;
                 this.timeRemaining = 45;
                 this.state = 'IDLE';
+                this.sunglassesActiveTimer = 0;
+
+                this.items = { sunglasses: 1, coffee: 2, airplane: 1, cheat_sheet: 1 };
+                this.stats = { cheatsUsed: 0, dodges: 0, coffeesDrank: 0 };
+
+                this.initCanvas();
                 this.updateUI();
-                
-                const startPhrases = ["Na, csapjunk a lecsóba! Füzeteket kinyitni.", "Jó reggelt. Remélem ma hoztak agyat is.", "Üljenek le. Aki mocorog, az repül."];
-                this.setDialogue(startPhrases[Math.floor(Math.random() * startPhrases.length)]);
-                
-                document.getElementById('controls-normal').classList.add('fade-in');
-                document.getElementById('controls-normal').classList.remove('fade-out');
-                document.getElementById('controls-quiz').classList.add('fade-out');
-                document.getElementById('controls-quiz').classList.remove('fade-in');
+
+                this.setDialogue("Jó reggelt! Remélem ma mindenki hozott magával agyat is az órára.");
+                this.setTeacherState('NEUTRAL');
 
                 if (this.timerInterval) clearInterval(this.timerInterval);
                 this.timerInterval = setInterval(() => this.tick(), 1000);
-                
-                this.scheduleNextEvent(2000);
+
+                this.scheduleNextEvent(2500);
             }
 
             reset() {
@@ -736,41 +1317,67 @@ STORE_ID: fizika-ucnik-sim
             tick() {
                 this.timeRemaining--;
                 document.getElementById('timer-display').innerText = `00:${this.timeRemaining.toString().padStart(2, '0')}`;
-                
+
+                if (this.sunglassesActiveTimer > 0) {
+                    this.sunglassesActiveTimer--;
+                    if (this.sunglassesActiveTimer === 0) {
+                        document.getElementById('sunglasses-banner').classList.add('hidden');
+                    }
+                }
+
                 if (this.timeRemaining <= 0) {
                     this.endGame(true);
                 }
             }
 
-            endGame(success) {
-                clearInterval(this.timerInterval);
-                clearTimeout(this.loopTimeout);
-                clearTimeout(this.quizTimeout);
-                playSound('bell');
-                const screen = document.getElementById('game-over-screen');
-                screen.classList.remove('hidden');
-                
-                const finalGrade = this.grade.toFixed(1);
-                document.getElementById('final-score').innerText = finalGrade;
-                
-                const title = document.getElementById('end-title');
-                const reason = document.getElementById('end-reason');
+            setTeacherState(state) {
+                const stage = document.getElementById('teacher-stage');
+                const face = document.getElementById('teacher-face');
+                const mouth = document.getElementById('teacher-mouth');
+                const notes = document.getElementById('singing-notes');
+                const eyesGroup = document.getElementById('eyes-group');
 
-                if (success) {
-                    title.innerText = "Kicsöngettek!";
-                    title.style.color = "#107c10";
-                    if (this.grade >= 4.0) {
-                        reason.innerText = "Túlélted, sőt, egész ügyes voltál. Ucník majdnem elmosolyodott.";
-                    } else if (this.grade >= 2.0) {
-                        reason.innerText = "Épphogy megúsztad. Következő órára tanulj!";
-                    } else {
-                        reason.innerText = "Bár vége az órának, de év végén találkozunk.";
-                    }
-                } else {
-                    playSound('fail');
-                    title.innerText = "Megbuktál!";
-                    title.style.color = "#d13438";
-                    reason.innerText = "Ucník tanárnő: 'Ez elfogadhatatlan, kiscsillag. Kifelé!'";
+                stage.className = 'teacher-container';
+                notes.setAttribute('opacity', '0');
+
+                if (state === 'NEUTRAL') {
+                    mouth.setAttribute('d', 'M88,122 Q100,126 112,122');
+                    eyesGroup.innerHTML = `
+                        <circle cx="82" cy="94" r="6" fill="#ffffff"/>
+                        <circle cx="82" cy="94" r="3" fill="#1e293b"/>
+                        <circle cx="118" cy="94" r="6" fill="#ffffff"/>
+                        <circle cx="118" cy="94" r="3" fill="#1e293b"/>
+                    `;
+                } else if (state === 'SUSPICIOUS') {
+                    stage.classList.add('suspicious');
+                    mouth.setAttribute('d', 'M88,124 L112,124');
+                    // Squinting eyes looking left
+                    eyesGroup.innerHTML = `
+                        <ellipse cx="82" cy="94" rx="6" ry="2" fill="#ffffff"/>
+                        <circle cx="79" cy="94" r="2.5" fill="#1e293b"/>
+                        <ellipse cx="118" cy="94" rx="6" ry="2" fill="#ffffff"/>
+                        <circle cx="115" cy="94" r="2.5" fill="#1e293b"/>
+                    `;
+                } else if (state === 'ANGRY') {
+                    stage.classList.add('angry');
+                    mouth.setAttribute('d', 'M85,128 Q100,115 115,128 Z'); // Open shouting mouth
+                    eyesGroup.innerHTML = `
+                        <circle cx="82" cy="94" r="7" fill="#ef4444"/>
+                        <circle cx="82" cy="94" r="2" fill="#000"/>
+                        <circle cx="118" cy="94" r="7" fill="#ef4444"/>
+                        <circle cx="118" cy="94" r="2" fill="#000"/>
+                    `;
+                } else if (state === 'SINGING') {
+                    stage.classList.add('singing');
+                    mouth.setAttribute('d', 'M92,120 A8,8 0 1,0 108,120 Z');
+                    notes.setAttribute('opacity', '1');
+                    eyesGroup.innerHTML = `
+                        <path d="M76,94 Q82,88 88,94" stroke="#000" stroke-width="2" fill="none"/>
+                        <path d="M112,94 Q118,88 124,94" stroke="#000" stroke-width="2" fill="none"/>
+                    `;
+                } else if (state === 'THROWING') {
+                    stage.classList.add('throwing');
+                    mouth.setAttribute('d', 'M88,125 Q100,118 112,125');
                 }
             }
 
@@ -780,13 +1387,15 @@ STORE_ID: fizika-ucnik-sim
             }
 
             gameLoop() {
-                if (this.timeRemaining <= 0 || this.state === 'QUIZ') return;
+                if (this.timeRemaining <= 0 || this.state === 'QUIZ' || this.state === 'QTE') return;
 
                 const rand = Math.random();
-                
-                if (rand < 0.2) {
+
+                if (rand < 0.15) {
+                    this.triggerFlyingChalkQTE();
+                } else if (rand < 0.35) {
                     this.triggerSinging();
-                } else if (rand < 0.5) {
+                } else if (rand < 0.65) {
                     this.triggerQuiz();
                 } else {
                     this.triggerIdle();
@@ -795,58 +1404,120 @@ STORE_ID: fizika-ucnik-sim
 
             triggerSinging() {
                 this.state = 'SINGING';
-                const text = singingLyrics[Math.floor(Math.random() * singingLyrics.length)];
-                this.setDialogue("🎶 " + text + " 🎶");
-                
-                const avatar = document.getElementById('teacher');
-                avatar.innerText = "🎶";
-                avatar.classList.add('singing');
-                
-                playSound('sing');
-                document.getElementById('blackboard-text').innerText = "♪ ♫ ♩ ♬";
+                this.setTeacherState('SINGING');
+                soundEngine.playSing();
 
-                this.scheduleNextEvent(3500);
+                const lyrics = singingLyrics[Math.floor(Math.random() * singingLyrics.length)];
+                this.setDialogue("🎶 " + lyrics + " 🎶");
+                document.getElementById('blackboard-text').innerText = "♪ ♫ ♩ ♬  Fizikai Dalfutam  ♬ ♩ ♫ ♪";
+
+                this.scheduleNextEvent(4000);
                 setTimeout(() => {
-                    avatar.classList.remove('singing');
-                    avatar.innerText = "👩‍🏫";
-                    this.state = 'IDLE';
-                }, 3000);
+                    if (this.state === 'SINGING') {
+                        this.setTeacherState('NEUTRAL');
+                        this.state = 'IDLE';
+                    }
+                }, 3500);
             }
 
             triggerIdle() {
-                const text = idleComments[Math.floor(Math.random() * idleComments.length)];
-                this.setDialogue(text);
-                playSound('mumble');
-                
-                if (Math.random() > 0.5) {
-                    playSound('chalk');
-                    document.getElementById('blackboard-text').innerText = text.length > 25 ? "Fizika..." : text;
+                const randText = idleComments[Math.floor(Math.random() * idleComments.length)];
+                this.setDialogue(randText);
+
+                if (Math.random() > 0.4) {
+                    this.setTeacherState('SUSPICIOUS');
+                    this.updateSuspicion(8);
+                } else {
+                    this.setTeacherState('NEUTRAL');
                 }
-                
-                this.scheduleNextEvent(Math.random() * 3000 + 2000);
+
+                if (Math.random() > 0.5) {
+                    soundEngine.playChalk();
+                    this.addChalkDust(100, 100, 10);
+                    document.getElementById('blackboard-text').innerText = randText.length > 30 ? "Fizikai tételek..." : randText;
+                }
+
+                this.scheduleNextEvent(Math.random() * 2500 + 2000);
+            }
+
+            triggerFlyingChalkQTE() {
+                this.state = 'QTE';
+                this.setTeacherState('THROWING');
+                soundEngine.playDeskSlam();
+                this.setDialogue("ELÉG A DUMÁBÓL! REPÜL A KRÉTA!");
+
+                const chalk = document.getElementById('flying-chalk');
+                const teacherStage = document.getElementById('teacher-stage');
+                const rect = teacherStage.getBoundingClientRect();
+
+                chalk.style.left = `${rect.left + 50}px`;
+                chalk.style.top = `${rect.top + 30}px`;
+                chalk.style.display = 'block';
+
+                soundEngine.playWhoosh();
+
+                // Show Dodge Overlay
+                const overlay = document.getElementById('dodge-overlay');
+                overlay.classList.remove('hidden');
+
+                // Animate chalk towards center/bottom
+                chalk.animate([
+                    { transform: 'scale(1) rotate(0deg)', left: `${rect.left + 50}px`, top: `${rect.top + 30}px` },
+                    { transform: 'scale(3) rotate(720deg)', left: '50%', top: '70%' }
+                ], {
+                    duration: 1200,
+                    easing: 'ease-in'
+                });
+
+                this.qteTimeout = setTimeout(() => {
+                    if (this.state === 'QTE') {
+                        // Got Hit!
+                        overlay.classList.add('hidden');
+                        chalk.style.display = 'none';
+                        soundEngine.playFail();
+                        this.setDialogue("TELIBE TALÁLT! Így talán felébredsz!");
+                        this.setTeacherState('ANGRY');
+                        this.updateGrade(-0.6);
+                        this.updateSuspicion(15);
+                        this.state = 'IDLE';
+                        this.scheduleNextEvent(3000);
+                    }
+                }, 1200);
+            }
+
+            dodgeChalk() {
+                if (this.state !== 'QTE') return;
+                clearTimeout(this.qteTimeout);
+
+                document.getElementById('dodge-overlay').classList.add('hidden');
+                document.getElementById('flying-chalk').style.display = 'none';
+
+                soundEngine.playDing();
+                this.stats.dodges++;
+                this.setDialogue("Hoppá! Szép elhajlás! De azért figyelj jobban!");
+                this.setTeacherState('NEUTRAL');
+                this.state = 'IDLE';
+                this.scheduleNextEvent(2500);
             }
 
             triggerQuiz(isVoluntary = false) {
                 this.state = 'QUIZ';
-                
+                this.setTeacherState('SUSPICIOUS');
+
                 const normalControls = document.getElementById('controls-normal');
                 const quizControls = document.getElementById('controls-quiz');
-                
-                normalControls.classList.add('fade-out');
-                normalControls.classList.remove('fade-in');
-                quizControls.classList.remove('fade-out');
-                quizControls.classList.add('fade-in');
-                
+
+                normalControls.classList.add('hidden');
+                quizControls.classList.remove('hidden');
+
                 const qIndex = Math.floor(Math.random() * questions.length);
                 this.currentQuestion = questions[qIndex];
-                
-                let intro = isVoluntary ? "Na lássuk a bátorságát! " : "Maga ott, mondja meg: ";
-                if (!isVoluntary && Math.random() > 0.8) intro = "Ihajla tyuhajla! Kérdés: ";
-                
+
+                let intro = isVoluntary ? "Na lássuk a bátorságát! " : "Maga ott, mondja meg gyorsan: ";
                 this.setDialogue(intro + this.currentQuestion.q);
                 document.getElementById('blackboard-text').innerText = "? " + this.currentQuestion.q;
-                playSound('chalk');
-                
+                soundEngine.playChalk();
+
                 quizControls.innerHTML = '';
                 this.currentQuestion.a.forEach((ans, index) => {
                     const btn = document.createElement('button');
@@ -855,14 +1526,13 @@ STORE_ID: fizika-ucnik-sim
                     quizControls.appendChild(btn);
                 });
 
-                // Add Very Risky Cheat Button
+                // Cheat button
                 const cheatBtn = document.createElement('button');
-                cheatBtn.innerHTML = "👀 Puskázás (Veszélyes!)";
-                cheatBtn.className = "btn-cheat";
+                cheatBtn.innerHTML = "👀 Puskázás (Kockázatos!)";
+                cheatBtn.className = "btn-cheat-quiz";
                 cheatBtn.onclick = () => this.attemptCheat();
                 quizControls.appendChild(cheatBtn);
 
-                // Start Timeout Logic (7 seconds)
                 if (this.quizTimeout) clearTimeout(this.quizTimeout);
                 this.quizTimeout = setTimeout(() => {
                     this.handleQuizTimeout(isVoluntary);
@@ -871,31 +1541,34 @@ STORE_ID: fizika-ucnik-sim
 
             attemptCheat() {
                 if (this.quizTimeout) clearTimeout(this.quizTimeout);
-                
-                // 35% chance of success (Very Risky)
-                const successChance = 0.35; 
-                const roll = Math.random();
-                
-                if (roll < successChance) {
-                    playSound('ding');
-                    this.setDialogue("Sikerült kilesni a helyes választ! (Megúsztad)");
-                    this.updateGrade(0.4); 
+                this.stats.cheatsUsed++;
+
+                let successChance = 0.4;
+                if (this.sunglassesActiveTimer > 0) successChance = 0.75; // Sunglasses boost
+
+                if (Math.random() < successChance) {
+                    soundEngine.playDing();
+                    this.setDialogue("Sikerült kilesni a helyes választ! (Megúsztad!)");
+                    this.updateGrade(0.4);
+                    this.updateSuspicion(10);
                     this.closeQuiz();
                 } else {
-                    playSound('fail');
-                    this.setDialogue("Kovács! Mit matat?! PUSKÁZIK?! EGYEST BEÍRTAM!");
-                    this.triggerAngryTeacher();
-                    this.updateGrade(-1.5); // Massive penalty for getting caught
+                    soundEngine.playFail();
+                    soundEngine.playDeskSlam();
+                    this.setDialogue("MIT MATAT A PAD ALATT?! PUSKÁZIK?! EGYEST BEÍRTAM!");
+                    this.setTeacherState('ANGRY');
+                    this.updateGrade(-1.2);
+                    this.updateSuspicion(35);
                     this.closeQuiz();
                 }
             }
 
             handleQuizTimeout(isVoluntary) {
-                const shout = shoutPhrases[Math.floor(Math.random() * shoutPhrases.length)];
-                this.setDialogue(shout);
-                this.triggerAngryTeacher();
-                this.updateGrade(-0.8); 
-
+                soundEngine.playFail();
+                this.setDialogue("HÉTTEL A FÉNY KERÜLI MEG A FÖLDET! Leagytalanodott? EGYES!");
+                this.setTeacherState('ANGRY');
+                this.updateGrade(-0.8);
+                this.updateSuspicion(15);
                 this.closeQuiz();
             }
 
@@ -905,34 +1578,65 @@ STORE_ID: fizika-ucnik-sim
                 const isCorrect = index === this.currentQuestion.correct;
 
                 if (isCorrect) {
-                    playSound('ding');
-                    let praise = praises[Math.floor(Math.random() * praises.length)];
+                    soundEngine.playDing();
+                    const praise = praises[Math.floor(Math.random() * praises.length)];
                     this.setDialogue(praise);
+                    this.setTeacherState('NEUTRAL');
                     this.updateGrade(isVoluntary ? 0.5 : 0.3);
+                    this.updateSuspicion(-10);
                 } else {
-                    playSound('fail');
+                    soundEngine.playFail();
                     let insult = insults[Math.floor(Math.random() * insults.length)];
-                    if (isVoluntary) insult = "Minek jelentkezik, ha nem tudja?! Kiscsillag...";
-                    
+                    if (isVoluntary) insult = "Minek jelentkezik, ha gőze sincs róla?! Kiscsillag...";
                     this.setDialogue(insult);
-                    this.triggerAngryTeacher();
+                    this.setTeacherState('ANGRY');
                     this.updateGrade(isVoluntary ? -1.0 : -0.6);
+                    this.updateSuspicion(15);
                 }
 
                 this.closeQuiz();
             }
 
             closeQuiz() {
-                const normalControls = document.getElementById('controls-normal');
-                const quizControls = document.getElementById('controls-quiz');
+                document.getElementById('controls-quiz').classList.add('hidden');
+                document.getElementById('controls-normal').classList.remove('hidden');
 
-                quizControls.classList.add('fade-out');
-                quizControls.classList.remove('fade-in');
-                normalControls.classList.remove('fade-out');
-                normalControls.classList.add('fade-in');
-                
                 this.state = 'IDLE';
                 this.scheduleNextEvent(3000);
+            }
+
+            useItem(itemKey) {
+                if (this.items[itemKey] <= 0) return;
+
+                if (itemKey === 'sunglasses') {
+                    this.items.sunglasses--;
+                    this.sunglassesActiveTimer = 12; // 12s active
+                    soundEngine.playItemUse();
+                    document.getElementById('sunglasses-banner').classList.remove('hidden');
+                    this.setDialogue("(Felvetted a napszemüveget. A tanárnő kevésbé látja, mit csinálsz!)");
+                } else if (itemKey === 'coffee') {
+                    this.items.coffee--;
+                    this.stats.coffeesDrank++;
+                    this.timeRemaining += 5; // Extra time
+                    soundEngine.playItemUse();
+                    this.setDialogue("(Megittad a kávét! +5 másodperc nyereség!)");
+                } else if (itemKey === 'airplane') {
+                    this.items.airplane--;
+                    soundEngine.playWhoosh();
+                    this.updateSuspicion(-30);
+                    this.setDialogue("(Eldobtál egy papírrepülőt! Kovácsra terelődött a figyelem!)");
+                } else if (itemKey === 'cheat_sheet') {
+                    if (this.state !== 'QUIZ') {
+                        this.setDialogue("Súgólapot csak felelet / kérdés közben tudsz használni!");
+                        return;
+                    }
+                    this.items.cheat_sheet--;
+                    soundEngine.playDing();
+                    this.handleAnswer(this.currentQuestion.correct, false);
+                    return;
+                }
+
+                this.updateUI();
             }
 
             action(type) {
@@ -940,8 +1644,8 @@ STORE_ID: fizika-ucnik-sim
 
                 if (this.state === 'SINGING') {
                     this.setDialogue("NE ZAVARJA A MŰVÉSZETET! Üljön le!");
-                    this.triggerAngryTeacher();
-                    this.updateGrade(-0.4);
+                    this.setTeacherState('ANGRY');
+                    this.updateGrade(-0.3);
                     this.scheduleNextEvent(2000);
                     return;
                 }
@@ -954,24 +1658,32 @@ STORE_ID: fizika-ucnik-sim
                 if (type === 'nod') {
                     if (Math.random() > 0.7) {
                         this.setDialogue("Mit bólogat, mint egy keménykalapos ló? Figyeljen inkább!");
-                        this.triggerAngryTeacher();
-                        this.updateGrade(-0.1);
+                        this.setTeacherState('SUSPICIOUS');
+                        this.updateSuspicion(10);
                     } else {
-                        this.setDialogue("(A tanárnő elégedetten nyugtázza a figyelmét)");
+                        this.setDialogue("(A tanárnő elégedetten nyugtázza a figyelmedet)");
                         this.updateGrade(0.1);
+                        this.updateSuspicion(-5);
                     }
                 } else if (type === 'write') {
-                    playSound('chalk');
-                    this.setDialogue("Helyes, írja csak. A tudás hatalom.");
+                    soundEngine.playChalk();
+                    this.addChalkDust(200, 150, 5);
+                    this.setDialogue("Helyes, írja csak. A tudás hatalom!");
                     this.updateGrade(0.15);
+                    this.updateSuspicion(-5);
                 } else if (type === 'sleep') {
-                    if (Math.random() > 0.6) {
-                        playSound('fail');
+                    let catchChance = 0.6;
+                    if (this.sunglassesActiveTimer > 0) catchChance = 0.2;
+
+                    if (Math.random() < catchChance) {
+                        soundEngine.playFail();
+                        soundEngine.playDeskSlam();
                         this.setDialogue("KISCSILLAG! AZONNAL ÉBRESZTŐ! EZ NEM SZÁLLODA!");
-                        this.triggerAngryTeacher();
+                        this.setTeacherState('ANGRY');
                         this.updateGrade(-0.8);
+                        this.updateSuspicion(25);
                     } else {
-                        this.setDialogue("(Sikerült észrevétlenül pihennie egyet)");
+                        this.setDialogue("(Sikerült észrevétlenül pihenned egyet...)");
                         this.updateGrade(0.05);
                     }
                 }
@@ -992,39 +1704,135 @@ STORE_ID: fizika-ucnik-sim
                 }
             }
 
+            updateSuspicion(amount) {
+                // If sunglasses active, reduce suspicion gain
+                if (amount > 0 && this.sunglassesActiveTimer > 0) {
+                    amount = Math.floor(amount * 0.4);
+                }
+
+                this.suspicion += amount;
+                if (this.suspicion > 100) this.suspicion = 100;
+                if (this.suspicion < 0) this.suspicion = 0;
+
+                // Max suspicion penalty trigger
+                if (this.suspicion >= 100) {
+                    soundEngine.playFail();
+                    soundEngine.playDeskSlam();
+                    this.setDialogue("ELÉG VOLT! KIFELÉ A TEREMBŐL! EGYES!");
+                    this.setTeacherState('ANGRY');
+                    this.updateGrade(-1.5);
+                    this.suspicion = 50;
+                }
+
+                this.updateUI();
+            }
+
             updateUI() {
+                // Grade Display
                 const gradeEl = document.getElementById('grade-display');
-                gradeEl.innerText = this.grade.toFixed(1);
-                
-                gradeEl.className = '';
-                if (this.grade >= 4) gradeEl.classList.add('grade-good');
-                else if (this.grade >= 2.5) gradeEl.classList.add('grade-avg');
-                else gradeEl.classList.add('grade-bad');
+                const gStr = this.grade.toFixed(1);
+                gradeEl.innerText = gStr;
+
+                gradeEl.className = 'grade-tag';
+                if (this.grade >= 4.5) gradeEl.classList.add('grade-5');
+                else if (this.grade >= 3.5) gradeEl.classList.add('grade-4');
+                else if (this.grade >= 2.5) gradeEl.classList.add('grade-3');
+                else if (this.grade >= 1.5) gradeEl.classList.add('grade-2');
+                else gradeEl.classList.add('grade-1');
+
+                // Suspicion Meter Fill
+                const susBar = document.getElementById('suspicion-meter');
+                susBar.style.width = `${this.suspicion}%`;
+                if (this.suspicion > 70) susBar.style.backgroundColor = '#d13438';
+                else if (this.suspicion > 40) susBar.style.backgroundColor = '#f2c94c';
+                else susBar.style.backgroundColor = '#107c10';
+
+                // Item counts
+                document.getElementById('count-sunglasses').innerText = this.items.sunglasses;
+                document.getElementById('count-coffee').innerText = this.items.coffee;
+                document.getElementById('count-airplane').innerText = this.items.airplane;
+                document.getElementById('count-cheat_sheet').innerText = this.items.cheat_sheet;
             }
 
             setDialogue(text) {
-                const box = document.getElementById('dialogue-box');
-                box.classList.remove('active');
-                void box.offsetWidth; 
-                box.classList.add('active');
-                
                 document.getElementById('dialogue-text').innerText = `"${text}"`;
             }
 
-            triggerAngryTeacher() {
-                const avatar = document.getElementById('teacher');
-                avatar.classList.add('angry');
-                avatar.innerText = "👿";
-                playSound('fail');
-                setTimeout(() => {
-                    avatar.classList.remove('angry');
-                    if(this.state !== 'SINGING') avatar.innerText = "👩‍🏫";
-                }, 1200);
+            endGame(success) {
+                clearInterval(this.timerInterval);
+                clearTimeout(this.loopTimeout);
+                clearTimeout(this.quizTimeout);
+                soundEngine.playBell();
+
+                const screen = document.getElementById('game-over-screen');
+                screen.classList.remove('hidden');
+
+                const finalGrade = this.grade.toFixed(1);
+                const scoreEl = document.getElementById('final-score');
+                scoreEl.innerText = finalGrade;
+
+                const title = document.getElementById('end-title');
+                const reason = document.getElementById('end-reason');
+
+                if (success) {
+                    title.innerText = "Kicsöngettek! 🔔";
+                    title.style.color = "#4ade80";
+                    if (this.grade >= 4.0) {
+                        reason.innerText = "Túlélted a fizikaórát! Ucník tanárnő még el is mosolyodott.";
+                    } else if (this.grade >= 2.0) {
+                        reason.innerText = "Épphogy átmentél! Következő órára tanulj többet!";
+                    } else {
+                        reason.innerText = "Bár vége az órának, de év végén találkozunk a pótvizsgán.";
+                    }
+                } else {
+                    soundEngine.playFail();
+                    title.innerText = "Megbuktál!";
+                    title.style.color = "#f87171";
+                    reason.innerText = "Ucník tanárnő: 'Ez elfogadhatatlan, kiscsillag! Kifelé!'";
+                }
+
+                document.getElementById('final-stats').innerText = `Puskázások: ${this.stats.cheatsUsed} | Elhajlások: ${this.stats.dodges} | Kávék: ${this.stats.coffeesDrank}`;
+
+                // Calculate Badges
+                this.renderBadges();
+            }
+
+            renderBadges() {
+                const badgesList = [
+                    { id: 'dodge', name: 'Mátrix', icon: '🏃‍♂️', condition: this.stats.dodges >= 1 },
+                    { id: 'cheater', name: 'Puska Mester', icon: '👀', condition: this.stats.cheatsUsed >= 2 },
+                    { id: 'coffee', name: 'Kávéfüggő', icon: '☕', condition: this.stats.coffeesDrank >= 2 },
+                    { id: 'genius', name: 'Fizikus', icon: '🎓', condition: this.grade >= 4.5 },
+                    { id: 'survivor', name: 'A Túlélő', icon: '🛡️', condition: this.grade >= 2.0 && this.suspicion >= 50 },
+                    { id: 'fail', name: 'Sötét Egyes', icon: '💀', condition: this.grade <= 1.5 }
+                ];
+
+                const container = document.getElementById('achievements-list');
+                container.innerHTML = '';
+
+                let badgeUnlockedCount = 0;
+                badgesList.forEach(b => {
+                    const card = document.createElement('div');
+                    card.className = `badge-card ${b.condition ? 'unlocked' : ''}`;
+                    card.innerHTML = `
+                        <span class="badge-icon">${b.icon}</span>
+                        <span>${b.name}</span>
+                    `;
+                    container.appendChild(card);
+                    if (b.condition) badgeUnlockedCount++;
+                });
+
+                if (badgeUnlockedCount > 0) {
+                    soundEngine.playBadgeUnlock();
+                }
             }
         }
 
-        const game = new Game();
+        const game = new PhysicsGame();
 
+        window.addEventListener('resize', () => {
+            game.initCanvas();
+        });
     </script>
 </body>
 </html>
